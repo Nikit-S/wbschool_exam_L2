@@ -1,0 +1,8 @@
+ab  ab 2
+ab  af 1
+af  ak 1
+al  ak 1
+ab  ab 1
+ab  af 1
+af  ak 1
+al  ak 1

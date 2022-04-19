@@ -1,0 +1,4 @@
+ab  	a4
+ab  af	a3
+af  ak	a2
+al  ak	a1

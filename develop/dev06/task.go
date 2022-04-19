@@ -1,5 +1,9 @@
 package main
 
+import (
+	"fmt"
+)
+
 /*
 === Утилита cut ===
 
@@ -13,6 +17,12 @@ package main
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
+type MyStruct struct{}
+
 func main() {
+	m := make(map[struct{}]int)
+	m[struct{}{}] = 2
+	m[struct{}{}] = 3
+	fmt.Println()
 
 }
