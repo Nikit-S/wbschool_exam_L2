@@ -75,6 +75,9 @@ type ByNumberDesc struct{ *tokenArr }
 
 func (o ByNumberDesc) Less(i, j int) bool {
 	a, err := strconv.Atoi(string(o.sort[i]))
+	if err != nil {
+		return bytes.Compare(o.sort[i], o.sort[j]) == -1
+	}
 	b, err := strconv.Atoi(string(o.sort[j]))
 	if err != nil {
 		return bytes.Compare(o.sort[i], o.sort[j]) == -1
@@ -86,6 +89,9 @@ type ByNumberAsc struct{ *tokenArr }
 
 func (o ByNumberAsc) Less(i, j int) bool {
 	a, err := strconv.Atoi(string(o.sort[i]))
+	if err != nil {
+		return bytes.Compare(o.sort[i], o.sort[j]) == 1
+	}
 	b, err := strconv.Atoi(string(o.sort[j]))
 	if err != nil {
 		return bytes.Compare(o.sort[i], o.sort[j]) == 1
