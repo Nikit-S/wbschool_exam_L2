@@ -35,11 +35,22 @@ import (
 func eventsForDayHandler(w http.ResponseWriter, r *http.Request) {
 	requests.Println(*r)
 	if r.Method == "GET" {
-		t := time.Now()
-		year, month, day := t.Date()
+		var err error
+		var obj model.Event
+		obj.UserId = r.URL.Query().Get("user_id")
+		t, err := time.Parse("2006-01-02", r.URL.Query().Get("date"))
+		//fmt.Println(r.URL.Query().Get("date"), obj.UserId)
+		if err != nil {
+			w.WriteHeader(500)
+			v, _ := json.Marshal(model.ErrorReuslt{Err: err.Error()})
+			fmt.Fprint(w, string(v))
+			return
+		}
+		obj.Date = model.ISOtime(t)
+		year, month, day := (time.Time(obj.Date)).Date()
 		from := time.Time(time.Date(year, month, day, 0, 0, 0, 0, time.UTC))
-		to := time.Time(time.Date(year, month, day+1, 0, 0, 0, 0, time.UTC))
-		res, err := eventMap.GetGroupFromTo(from, to)
+		to := time.Time(time.Date(year, month, day+1, 0, 0, 0, -1, time.UTC))
+		res, err := eventMap.GetGroupFromTo(from, to, obj)
 		fmt.Println(from, to)
 		if err != nil {
 			w.WriteHeader(500)
@@ -56,11 +67,22 @@ func eventsForDayHandler(w http.ResponseWriter, r *http.Request) {
 func eventsForWeekHandler(w http.ResponseWriter, r *http.Request) {
 	requests.Println(*r)
 	if r.Method == "GET" {
-		t := time.Now()
+		var err error
+		var obj model.Event
+		obj.UserId = r.URL.Query().Get("user_id")
+		t, err := time.Parse("2006-01-02", r.URL.Query().Get("date"))
+		//fmt.Println(r.URL.Query().Get("date"), obj.UserId)
+		if err != nil {
+			w.WriteHeader(500)
+			v, _ := json.Marshal(model.ErrorReuslt{Err: err.Error()})
+			fmt.Fprint(w, string(v))
+			return
+		}
+		obj.Date = model.ISOtime(t)
 		year, month, day := t.Date()
 		from := time.Time(time.Date(year, month, day-int(t.Weekday())+1, 0, 0, 0, 0, time.UTC))
-		to := time.Time(time.Date(year, month, day+7-int(t.Weekday()), 0, 0, 0, 0, time.UTC))
-		res, err := eventMap.GetGroupFromTo(from, to)
+		to := time.Time(time.Date(year, month, day+7-int(t.Weekday())+1, 0, 0, 0, -1, time.UTC))
+		res, err := eventMap.GetGroupFromTo(from, to, obj)
 		fmt.Println(from, to)
 		if err != nil {
 			w.WriteHeader(500)
@@ -77,11 +99,22 @@ func eventsForWeekHandler(w http.ResponseWriter, r *http.Request) {
 func eventsForMonthHandler(w http.ResponseWriter, r *http.Request) {
 	requests.Println(*r)
 	if r.Method == "GET" {
-		t := time.Now()
+		var err error
+		var obj model.Event
+		obj.UserId = r.URL.Query().Get("user_id")
+		t, err := time.Parse("2006-01-02", r.URL.Query().Get("date"))
+		//fmt.Println(r.URL.Query().Get("date"), obj.UserId)
+		if err != nil {
+			w.WriteHeader(500)
+			v, _ := json.Marshal(model.ErrorReuslt{Err: err.Error()})
+			fmt.Fprint(w, string(v))
+			return
+		}
+		obj.Date = model.ISOtime(t)
 		year, month, _ := t.Date()
 		from := time.Time(time.Date(year, month, 0, 0, 0, 0, 0, time.UTC))
-		to := time.Time(time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC))
-		res, err := eventMap.GetGroupFromTo(from, to)
+		to := time.Time(time.Date(year, month+1, 0, 0, 0, 0, -1, time.UTC))
+		res, err := eventMap.GetGroupFromTo(from, to, obj)
 		fmt.Println(from, to)
 		if err != nil {
 			w.WriteHeader(500)

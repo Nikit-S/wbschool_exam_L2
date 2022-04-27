@@ -11,6 +11,7 @@ func (t ISOtime) String() string {
 	return time.Time(t).String()
 }
 func (c *ISOtime) UnmarshalJSON(b []byte) error {
+	fmt.Println(string(b))
 	value := strings.Trim(string(b), `"`) //get rid of "
 	if value == "" || value == "null" {
 		return nil
@@ -62,12 +63,13 @@ func (m *Db) Get(id int) ([]byte, error) {
 	return json.Marshal(res)
 }
 
-func (m *Db) GetGroupFromTo(b time.Time, a time.Time) ([]byte, error) {
+func (m *Db) GetGroupFromTo(b time.Time, a time.Time, obj Event) ([]byte, error) {
 	ret := AggrResult{}
 	tempRes := Result{}
 	for key := range m.Storage {
 		temp := time.Time(m.Storage[key].Date)
-		if (b.Before(temp) && a.After(temp)) || b == temp || a == temp {
+		if ((b.Before(temp) && a.After(temp)) || b == temp || a == temp) &&
+			obj.UserId == m.Storage[key].UserId {
 			tempRes.Res = m.Storage[key]
 			ret.Res = append(ret.Res, tempRes.Res)
 		}
