@@ -13,7 +13,7 @@ type Db struct {
 
 type Event struct {
 	UserId string  `json:"user_id" validate:"required"`
-	Id     int     `json:"id" validate:"required"`
+	Id     int     `json:"id"`
 	Date   ISOtime `json:"date" validate:"required"`
 	Name   string  `json:"name" validate:"required"`
 }

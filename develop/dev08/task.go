@@ -122,7 +122,7 @@ func mainLoop() {
 	for reader.Scan() {
 
 		for _, comm := range strings.Split(reader.Text(), ";") {
-
+			// todo quit
 			tokens := strings.Fields(comm)
 			if len(tokens) == 0 {
 				myDirr, err := os.Getwd()

@@ -22,7 +22,7 @@ import (
 func getTime(str string) {
 	t, err := ntp.Time(str)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, err.Error())
+		fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 	fmt.Printf("%s\n", t)

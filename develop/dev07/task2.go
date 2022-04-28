@@ -41,16 +41,17 @@ fmt.Printf(“fone after %v”, time.Since(start))
 func Unite(channels ...<-chan interface{}) <-chan interface{} {
 	superchan := make(chan interface{})
 	for _, ch := range channels {
-		fmt.Println("Try to unite")
+		//fmt.Println("Try to unite")
 
 		go func(ch <-chan interface{}) {
 			select {
-			case <-ch:
+			case x := <-ch:
+				superchan <- x
 				close(superchan)
 			case <-superchan:
 				return
 			}
-			fmt.Println("United")
+			//fmt.Println("United")
 			//close(superchan)
 		}(ch)
 	}
@@ -64,18 +65,19 @@ func main() {
 		go func() {
 			defer close(c)
 			time.Sleep(after)
+			c <- "Hello" //todo
 			fmt.Println("closed")
 		}()
 		return c
 	}
 
 	start := time.Now()
-	<-or(
+	fmt.Println(<-or(
 		sig(3*time.Second),
 		sig(5*time.Second),
 		sig(10*time.Second),
-	)
+	))
 
 	fmt.Printf("done after %v\n", time.Since(start))
-	time.Sleep(15 * time.Second)
+	//time.Sleep(15 * time.Second)
 }

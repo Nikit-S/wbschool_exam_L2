@@ -22,7 +22,7 @@ import (
 
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
-func getLinks(body io.Reader, host string) []string {
+func getLinks(body io.Reader) []string {
 	var links []string
 	z := html.NewTokenizer(body)
 	for {
@@ -60,7 +60,7 @@ func (scrp *scraper) scrape(urlStr string) {
 
 	resp, err := scrp.Get(urlStr)
 	fmt.Fprintln(os.Stdout, urlStr)
-	if err != nil || resp.Status != "200 OK" {
+	if err != nil || resp.StatusCode != 200 {
 		scrp.wg.Done()
 		return
 	}
@@ -71,11 +71,17 @@ func (scrp *scraper) scrape(urlStr string) {
 		return
 	}
 	if urlStrTemp.Host+urlStrTemp.Path == resp.Request.URL.Host {
-		os.Mkdir(resp.Request.URL.Host, os.FileMode(777))
+		err := os.Mkdir(resp.Request.URL.Host, os.FileMode(777))
+		if err != nil {
+			scrp.wg.Done()
+			return
+		}
 		filename = "index.html"
 	} else {
 
 		path := resp.Request.URL.Path
+		// <a href="#">
+		// <a href="/">
 		if len(path) == 1 {
 			scrp.wg.Done()
 			return
@@ -87,33 +93,44 @@ func (scrp *scraper) scrape(urlStr string) {
 			filename = path[1:]
 		}
 	}
+
+	//abc.ru + / + 1page
+	//abc.ru + / + 1page/
+	//abc.ru + / + //././dir1/page/
 	stat, err := os.Stat(filepath.Dir(resp.Request.URL.Host + "/" + filename))
+
 	if err == nil && !stat.IsDir() {
-		os.Remove(filepath.Dir(resp.Request.URL.Host + "/" + filename))
+		err = os.Remove(filepath.Dir(resp.Request.URL.Host + "/" + filename))
+		if err != nil {
+			scrp.wg.Done()
+			return
+		}
 	}
+
 	err = os.MkdirAll(filepath.Dir(resp.Request.URL.Host+"/"+filename), os.FileMode(666))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "os.MkdirAll error")
-		fmt.Fprintln(os.Stderr, filepath.Dir(resp.Request.URL.Host+"/"+filename), err)
+		_, _ = fmt.Fprintln(os.Stderr, "os.MkdirAll error")
+		_, _ = fmt.Fprintln(os.Stderr, filepath.Dir(resp.Request.URL.Host+"/"+filename), err)
 		scrp.wg.Done()
 		return
 	}
 	file, err := os.Create(resp.Request.URL.Host + "/" + filename)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "os.Create error")
-		fmt.Fprintln(os.Stderr, resp.Request.URL.Host, "/", filename, err)
+		_, _ = fmt.Fprintln(os.Stderr, "os.Create error")
+		_, _ = fmt.Fprintln(os.Stderr, resp.Request.URL.Host, "/", filename, err)
 		scrp.wg.Done()
 		return
 	}
 	defer file.Close()
+
+	//fmt.Println("Creating file:", filename)
+	scrp.Store(filename, struct{}{})
+	r := io.TeeReader(resp.Body, file)
 	if !*scrp.recursive {
 		scrp.wg.Done()
 		return
 	}
-	//fmt.Println("Creating file:", filename)
-	scrp.Store(filename, struct{}{})
-	r := io.TeeReader(resp.Body, file)
-	for _, str := range getLinks(r, urlStrTemp.Host) {
+	for _, str := range getLinks(r) {
 
 		_, ok := scrp.Load(str)
 		if ok {
@@ -146,7 +163,7 @@ func main() {
 	scrp.wg.Add(1)
 	scrp.scrape(args[0])
 	//scrp.wg.Wait()
-	fmt.Println(scrp.Map)
+	fmt.Println(scrp.Map) //todo
 	//scrp.wg.Wait()
 	scrp.wg.Wait()
 	fmt.Println("Done!")

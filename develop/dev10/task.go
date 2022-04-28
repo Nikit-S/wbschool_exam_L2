@@ -46,10 +46,11 @@ func main() {
 				os.Exit(0)
 			}
 			if err != nil {
-				fmt.Println(err)
+				//fmt.Println(err)
 				continue
 			}
 			fmt.Print(message)
+			fmt.Fprintf(os.Stdin, "hello")
 		}
 	}()
 
@@ -57,7 +58,8 @@ func main() {
 		_, err := fmt.Fprintf(conn, reader.Text()+" / HTTP/1.0\r\n\r\n")
 		if err != nil {
 			fmt.Println(err)
-			os.Exit(0)
+			break
 		}
 	}
+	fmt.Println("Exit")
 }
