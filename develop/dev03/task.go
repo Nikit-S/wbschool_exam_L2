@@ -9,8 +9,6 @@ import (
 	"sort"
 	"strconv"
 	"unicode"
-
-	"github.com/mpvl/unique"
 )
 
 /*
@@ -41,9 +39,9 @@ import (
 type tokenArr struct {
 	main [][]byte
 	sort [][]byte
-	k    int
 }
 
+// далее идет наполнение инетфейсов под стандартный sort
 func (s tokenArr) Len() int { return len(s.sort) }
 func (s tokenArr) Swap(i, j int) {
 	s.main[i], s.main[j] = s.main[j], s.main[i]
@@ -55,33 +53,31 @@ func (s tokenArr) Truncate(n int) {
 	s.sort = s.sort[:n-1]
 }
 
+func (s tokenArr) chooseLess(i, j int) ([]byte, []byte) {
+	x, y := []byte{}, []byte{}
+	if len(s.sort[i]) == 0 && len(s.sort[j]) == 0 {
+		x = s.main[i]
+		y = s.main[j]
+	} else {
+		x = s.sort[i]
+		y = s.sort[j]
+	}
+	return x, y
+}
+
 type ByLetterDesc struct{ *tokenArr }
 
 func (o ByLetterDesc) Less(i, j int) bool {
-	x, y := []byte{}, []byte{}
-	if len(o.sort[i]) == 0 && len(o.sort[j]) == 0 {
-		x = o.main[i]
-		y = o.main[j]
-	} else {
-		x = o.sort[i]
-		y = o.sort[j]
-	}
+	x, y := o.chooseLess(i, j)
+	//мы принимаем решение о том как будем сортпировать
+	//либо у нас есть К столбец и тогда сравнивается сортируемая часть
+	//либо обрезанная
 	return bytes.Compare(x, y) == -1
 }
 
 type ByLetterAsc struct{ *tokenArr }
 
-func (o ByLetterAsc) Less(i, j int) bool {
-	x, y := []byte{}, []byte{}
-	if len(o.sort[i]) == 0 && len(o.sort[j]) == 0 {
-		x = o.main[i]
-		y = o.main[j]
-	} else {
-		x = o.sort[i]
-		y = o.sort[j]
-	}
-	return bytes.Compare(x, y) == 1
-}
+func (o ByLetterAsc) Less(i, j int) bool { return !ByLetterDesc(o).Less(i, j) }
 
 func IsVisible(r rune) bool {
 	return unicode.IsPrint(r) && !unicode.IsSpace(r)
@@ -90,76 +86,48 @@ func IsVisible(r rune) bool {
 type ByNumberDesc struct{ *tokenArr }
 
 func (o ByNumberDesc) Less(i, j int) bool {
-	x, y := []byte{}, []byte{}
-	if len(o.sort[i]) == 0 && len(o.sort[j]) == 0 {
-		x = o.main[i]
-		y = o.main[j]
-	} else {
-		x = o.sort[i]
-		y = o.sort[j]
-	}
-	a, err := strconv.Atoi(string(x))
-	if err != nil {
+	x, y := o.chooseLess(i, j)
+	a, err1 := strconv.Atoi(string(x))
+	b, err2 := strconv.Atoi(string(y))
+	if err1 != nil && err2 != nil {
 		return bytes.Compare(x, y) == -1
 	}
-	b, err := strconv.Atoi(string(y))
-	if err != nil {
-		return bytes.Compare(x, y) == -1
+	if err1 != nil && err2 == nil {
+		return bytes.Compare(nil, y) == -1
+	}
+	if err1 == nil && err2 != nil {
+		return bytes.Compare(x, nil) == -1
 	}
 	return a < b
 }
 
 type ByNumberAsc struct{ *tokenArr }
 
-func (o ByNumberAsc) Less(i, j int) bool {
-	x, y := []byte{}, []byte{}
-	if len(o.sort[i]) == 0 && len(o.sort[j]) == 0 {
-		x = o.main[i]
-		y = o.main[j]
-	} else {
-		x = o.sort[i]
-		y = o.sort[j]
-	}
-	a, err := strconv.Atoi(string(x))
-	if err != nil {
-		return bytes.Compare(x, y) == 1
-	}
-	b, err := strconv.Atoi(string(y))
-	if err != nil {
-		return bytes.Compare(x, y) == 1
-	}
-	return a > b
-}
+func (o ByNumberAsc) Less(i, j int) bool { return !ByNumberDesc(o).Less(i, j) }
 
 func (s *tokenArr) getFreeSort(k int) {
 	if k < 0 {
 		os.Exit(1)
 	}
 	valid := false
-	s.k = k
+	// если можем выделить К столбец то тогда он отправлятся в категорию sort
+	//со всем предшествующими пробелами
 	for i := range s.main {
 		temp := s.main[i]
 		for j := 0; j < k; j++ {
 			temp = bytes.TrimLeftFunc(temp, unicode.IsSpace)
-			//fmt.Println(s.main[i])
 			temp = bytes.TrimLeftFunc(temp, IsVisible)
-			//fmt.Println(s.main[i])
 		}
 		if len(temp) > 0 {
 			valid = true
 		}
 		s.sort = append(s.sort, temp)
-		//fmt.Println(s.main[i])
-		//fmt.Println(s.sort[i])
 	}
 	if !valid {
-		s.k = 0
 		for i := range s.main {
 			s.sort[i] = s.main[i]
 		}
-
 	}
-	//fmt.Println(valid)
 
 }
 
@@ -169,20 +137,17 @@ func Unique(s *tokenArr) {
 	}
 	i := 0
 	for i < len(s.main)-1 {
+
 		if bytes.Compare(s.main[i], s.main[i+1]) == 0 {
-			//s.sort = append(s.main[:i], s.main[i+1:]...)
 			s.main = append(s.main[:i], s.main[i+1:]...)
-			//fmt.Println("--upmain--")
-			//for _, v := range s.main {
-			//	fmt.Println(string(v))
-			//}
-			//continue
+			continue
 		}
 		i++
 	}
 }
 
 func main() {
+	//блок инициализации
 	colNum := flag.Int("k", 1, "указание колонки для сортировки")
 	numSort := flag.Bool("n", false, "сортировать по числовому значению")
 	revSort := flag.Bool("r", false, "сортировать в обратном порядке")
@@ -191,13 +156,10 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
-	//fmt.Println("colNum: ", *colNum)
-	//fmt.Println("numSort: ", *numSort)
-	//fmt.Println("revSort: ", *revSort)
-	//fmt.Println("dupSort: ", *dupSort)
-	//fmt.Println("args: ", args)
-	//fmt.Println()
 
+	if len(args) <= 0 {
+		return
+	}
 	file, err := os.Open(args[0])
 	defer file.Close()
 	if err != nil {
@@ -206,9 +168,10 @@ func main() {
 	reader := bufio.NewReader(file)
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
-
 	mainObj := tokenArr{}
 
+	//блок работы
+	//конвертируем в строки
 	for scanner.Scan() {
 		_, lines, err := bufio.ScanLines([]byte(scanner.Text()), true)
 		if err != nil {
@@ -217,43 +180,29 @@ func main() {
 		mainObj.main = append(mainObj.main, lines)
 	}
 
+	//выделяем сортируемую и несортьируемую часть по колонке
 	mainObj.getFreeSort(*colNum - 1)
-	//for _, v := range mainObj.sort {
-	//	fmt.Println(string(v))
-	//}
-	//fmt.Println("-------")
-	//for _, v := range mainObj.main {
-	//	fmt.Println(string(v))
-	//}
 
-	//for _, v := range mainObj.sort {
-	//	fmt.Println(string(v))
-	//}
-	//fmt.Println("-----")
-	var temObj unique.Interface
+	//выюираем метод сортировки
 	if *revSort {
 		if *numSort {
-			temObj = &ByNumberAsc{&mainObj}
+			sort.Sort(ByNumberAsc{&mainObj})
 		} else {
-			temObj = &ByLetterAsc{&mainObj}
+			sort.Sort(ByLetterAsc{&mainObj})
 		}
-		//mainObj.main = append(mainObj.sort, mainObj.free...)
 	} else {
 		if *numSort {
-			temObj = &ByNumberDesc{&mainObj}
+			sort.Sort(ByNumberDesc{&mainObj})
 		} else {
-			temObj = &ByLetterDesc{&mainObj}
+			sort.Sort(ByLetterDesc{&mainObj})
 		}
 	}
-	sort.Sort(temObj)
-	//for _, v := range mainObj.main {
-	//	fmt.Println(string(v))
-	//}
+
+	//удаляем дуюликаты на уже отсоритрованном массиве потому что так проще
 	if *dupSort {
 		Unique(&mainObj)
-		//fmt.Println("------main_unique-----")
 	}
-	//fmt.Println("---result---")
+
 	for _, v := range mainObj.main {
 		fmt.Println(string(v))
 	}

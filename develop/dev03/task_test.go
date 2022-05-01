@@ -137,14 +137,14 @@ func TestSimpleKeyReverse(t *testing.T) {
 func TestSimpleKeyUniqueNumReverse(t *testing.T) {
 	for i := range [15]struct{}{} {
 		fn := "./test_files/uniqueNum/" + strconv.Itoa(i) + ".txt"
-		out1, err := exec.Command("./sort", "-n", "-u", "-r", fn, fn).Output()
-		t.Log("sort", "-n", "-u", "-r", fn, fn)
+		out1, err := exec.Command("./sort", "-u", "-r", fn, fn).Output()
+		t.Log("sort", "-u", "-r", fn, fn)
 		if err != nil {
-			log.Fatal("sort", "-n", "-u", "-r", fn, fn, err)
+			log.Fatal("sort", "-u", "-r", fn, fn, err)
 		}
-		out2, err := exec.Command("sort", "-n", "-u", "-r", fn, fn).Output()
+		out2, err := exec.Command("sort", "-u", "-r", fn, fn).Output()
 		if err != nil {
-			log.Fatal("sort", "-n", "-u", "-r", fn, fn, err)
+			log.Fatal("sort", "-u", "-r", fn, fn, err)
 		}
 		if !bytes.Equal(out1, out2) {
 			t.Fail()

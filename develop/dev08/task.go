@@ -120,9 +120,8 @@ func mainLoop() {
 
 	reader := bufio.NewScanner(os.Stdin)
 	for reader.Scan() {
-
+		//сделали работу с командами без пайпов
 		for _, comm := range strings.Split(reader.Text(), ";") {
-			// todo quit
 			tokens := strings.Fields(comm)
 			if len(tokens) == 0 {
 				myDirr, err := os.Getwd()
@@ -134,6 +133,8 @@ func mainLoop() {
 			}
 			if f, ok := definedCommands[tokens[0]]; ok {
 				f(tokens)
+			} else if tokens[0] == "quit" {
+				return
 			} else {
 				var cmd *exec.Cmd
 				if len(tokens) > 1 {

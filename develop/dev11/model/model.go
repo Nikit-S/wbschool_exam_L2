@@ -12,10 +12,10 @@ type Db struct {
 }
 
 type Event struct {
-	UserId string  `json:"user_id" validate:"required"`
+	UserId string  `json:"user_id"`
 	Id     int     `json:"id"`
-	Date   ISOtime `json:"date" validate:"required"`
-	Name   string  `json:"name" validate:"required"`
+	Date   ISOtime `json:"date"`
+	Name   string  `json:"name"`
 }
 
 type Result struct {

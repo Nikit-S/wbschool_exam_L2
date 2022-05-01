@@ -41,12 +41,12 @@ func check(st []rune) error {
 	return nil
 }
 
-func escChar(st []rune, i int) (int, error) {
+// выясняем следующий не бекслеш и является ли числом
+func escChar(st []rune, i int) int {
 	if i < len(st)-1 && unicode.IsDigit(st[i+1]) || st[i+1] == '\\' {
 		i++
 	}
-
-	return i, nil
+	return i
 }
 
 func unPack(st []rune) ([]rune, error) {
@@ -58,19 +58,20 @@ func unPack(st []rune) ([]rune, error) {
 	if err = check(st); err != nil {
 		return nil, err
 	}
+
 	for i := 0; i < len(st); i++ {
+		// бежим по строке до бекслеша
 		if st[i] == '\\' {
-			i, err = escChar(st, i)
-			if err != nil {
-				return nil, err
-			}
+			i = escChar(st, i)
 			sb.WriteRune(st[i])
 			continue
 		}
+		//если натыкаемся на число, записываем следующий за ним символ нужное
+		//количество раз и двигаем индекс на длину этого числа
 		if st[i] >= '1' && st[i] < '9' {
 			t := countNu(st, i)
 			nu, _ := strconv.Atoi(string(st[i:t]))
-			//fmt.Println(string(st[i:]), nu)
+
 			for nu > 1 {
 				sb.WriteRune(st[i-1])
 				nu--

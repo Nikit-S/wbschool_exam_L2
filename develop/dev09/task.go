@@ -29,7 +29,6 @@ func getLinks(body io.Reader) []string {
 		tt := z.Next()
 		switch tt {
 		case html.ErrorToken:
-			//todo: links list shoudn't contain duplicates
 			return links
 		case html.StartTagToken, html.EndTagToken:
 			token := z.Token()
@@ -59,7 +58,7 @@ type scraper struct {
 func (scrp *scraper) scrape(urlStr string) {
 
 	resp, err := scrp.Get(urlStr)
-	fmt.Fprintln(os.Stdout, urlStr)
+	fmt.Println(urlStr)
 	if err != nil || resp.StatusCode != 200 {
 		scrp.wg.Done()
 		return
@@ -70,6 +69,7 @@ func (scrp *scraper) scrape(urlStr string) {
 		scrp.wg.Done()
 		return
 	}
+	// проверка на то что это корнвая папка
 	if urlStrTemp.Host+urlStrTemp.Path == resp.Request.URL.Host {
 		err := os.Mkdir(resp.Request.URL.Host, os.FileMode(777))
 		if err != nil {
@@ -87,6 +87,7 @@ func (scrp *scraper) scrape(urlStr string) {
 			return
 		}
 
+		//либо это папка и тогда мы в корень полжем index либо это файл
 		if path[len(path)-1] == '/' {
 			filename = path[1:] + "index.html"
 		} else {
@@ -99,6 +100,7 @@ func (scrp *scraper) scrape(urlStr string) {
 	//abc.ru + / + //././dir1/page/
 	stat, err := os.Stat(filepath.Dir(resp.Request.URL.Host + "/" + filename))
 
+	//удаляем файл если собираемся созхдать папку с таким же назваием
 	if err == nil && !stat.IsDir() {
 		err = os.Remove(filepath.Dir(resp.Request.URL.Host + "/" + filename))
 		if err != nil {
@@ -106,7 +108,7 @@ func (scrp *scraper) scrape(urlStr string) {
 			return
 		}
 	}
-
+	//создаем необъодимые подпапки
 	err = os.MkdirAll(filepath.Dir(resp.Request.URL.Host+"/"+filename), os.FileMode(666))
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "os.MkdirAll error")
@@ -114,6 +116,8 @@ func (scrp *scraper) scrape(urlStr string) {
 		scrp.wg.Done()
 		return
 	}
+
+	//создаем файл
 	file, err := os.Create(resp.Request.URL.Host + "/" + filename)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, "os.Create error")
@@ -130,6 +134,7 @@ func (scrp *scraper) scrape(urlStr string) {
 		scrp.wg.Done()
 		return
 	}
+	//идем посещать ссылки
 	for _, str := range getLinks(r) {
 
 		_, ok := scrp.Load(str)
@@ -162,8 +167,6 @@ func main() {
 	}
 	scrp.wg.Add(1)
 	scrp.scrape(args[0])
-	//scrp.wg.Wait()
-	fmt.Println(scrp.Map) //todo
 	//scrp.wg.Wait()
 	scrp.wg.Wait()
 	fmt.Println("Done!")

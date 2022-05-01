@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 )
 
 /*
@@ -27,33 +28,14 @@ import (
 Программа должна проходить все тесты. Код должен проходить проверки go vet и golint.
 */
 
-type outPut struct {
-	before   [][]byte
-	after    int
-	needle   []byte
-	lineNum  int
-	totalNum int
-	distance int
-	buf      bytes.Buffer
-}
-
-/*
-func (o *outPut) checkLine(line []byte) bool {
-	for _, f := range o.checkers {
-		if !f(line, o.needle) {
-			return false
-		}
-	}
-	return true
-}*/
-
 func regFreeContains(h, n []byte) bool {
 	return bytes.Contains(bytes.ToLower(h), bytes.ToLower(n))
 }
 
+//это простой grep
+
 func main() {
 
-	mainObj := &outPut{}
 	after := flag.Int("A", 0, "печатать +N строк после совпадения")
 	before := flag.Int("B", 0, "печатать +N строк до совпадения")
 	context := flag.Int("C", 0, "(A+B) печатать ±N строк вокруг совпадения")
@@ -64,18 +46,7 @@ func main() {
 	line := flag.Bool("n", false, "печатать номер строки")
 	flag.Parse()
 
-	fmt.Println("after: ", *after)
-	fmt.Println("before: ", *before)
-	fmt.Println("context: ", *context)
-	fmt.Println("count: ", *count)
-	fmt.Println("ignore: ", *ignore)
-	fmt.Println("invert: ", *invert)
-	fmt.Println("fixed: ", *fixed)
-	fmt.Println("line: ", *line)
-
 	args := flag.Args()
-
-	fmt.Println("args: ", args)
 
 	file, err := os.Open(args[1])
 	defer file.Close()
@@ -85,78 +56,76 @@ func main() {
 	reader := bufio.NewReader(file)
 	scanner := bufio.NewScanner(reader)
 	scanner.Split(bufio.ScanLines)
-	mainObj.needle = []byte(args[0])
+
+	obj := [][]byte{}
+	needle := []byte(args[0])
+	printThis := false
+	lineNum := 0
 	if *context > 0 {
 		*before = *context
 		*after = *context
 	}
+
+	//загоняем файл в структуру
 	for scanner.Scan() {
-		mainObj.lineNum++
-		mainObj.distance++
-		printThis := false
 		_, lines, err := bufio.ScanLines([]byte(scanner.Text()), true)
 		if err != nil {
 			return
 		}
-		linesDup := lines
-		if !*ignore && !*fixed {
-			printThis, err = regexp.Match(string(mainObj.needle), linesDup)
-		}
+		obj = append(obj, lines)
+	}
+
+	printable := make(map[int]struct{})
+	if *ignore {
+		bytes.ToLower(needle)
+	}
+	for i, v := range obj {
 		if *ignore {
-			linesDup := bytes.ToLower(lines)
-			mainObj.needle = bytes.ToLower(mainObj.needle)
-			printThis, err = regexp.Match(string(mainObj.needle), linesDup)
+			v = bytes.ToLower(v)
 		}
 		if *fixed {
-			printThis = bytes.Contains(linesDup, mainObj.needle)
+			printThis = bytes.Contains(v, needle)
+		} else {
+			printThis, _ = regexp.Match(string(needle), v)
 		}
 		if *invert {
 			printThis = !printThis
 		}
 		if printThis {
-			if *count {
-				mainObj.totalNum++
-			}
+			lineNum++
+			if !*count {
+				printable[i] = struct{}{}
+				b, a := *before, *after
 
-			if *before > 0 {
-				fmt.Println(mainObj.before)
-				for j := range mainObj.before {
-					if mainObj.distance-1-mainObj.after-len(mainObj.before)+j < 0 {
-						continue
+				for b > 0 {
+					if i-b >= 0 {
+						printable[i-b] = struct{}{}
 					}
-					fmt.Fprintf(&mainObj.buf, "%s\n", mainObj.before[j])
+					b--
 				}
-				mainObj.before = [][]byte{}
-			}
-
-			if *line {
-				fmt.Fprintf(&mainObj.buf, "%v:", mainObj.lineNum)
-			}
-			fmt.Fprintf(&mainObj.buf, "%s", lines)
-			fmt.Fprintf(&mainObj.buf, "\n")
-			mainObj.after = 0
-			mainObj.distance = 0
-		}
-
-		if *after > 0 && !printThis {
-			if mainObj.after < *after {
-				fmt.Fprintf(&mainObj.buf, "%s\n", lines)
-				mainObj.after++
-			}
-		}
-		if *before > 0 && !printThis {
-			if *before == 1 {
-				mainObj.before = [][]byte{lines}
-			} else if len(mainObj.before) < *before {
-				mainObj.before = append(mainObj.before, lines)
-			} else {
-				mainObj.before = append(mainObj.before[1:], lines)
+				for a > 0 {
+					if i+b < len(obj) {
+						printable[i+a] = struct{}{}
+					}
+					a--
+				}
 			}
 		}
 	}
 	if *count {
-		fmt.Printf("%v\n", mainObj.totalNum)
+		fmt.Println(lineNum)
 	} else {
-		fmt.Print(mainObj.buf.String())
+		var keys []int
+		for k := range printable {
+			keys = append(keys, k)
+		}
+		sort.Ints(keys)
+		for _, k := range keys {
+			if *line {
+				fmt.Print(k+1, ":")
+			}
+			fmt.Print(string(obj[k]))
+			fmt.Print("\n")
+		}
 	}
 }
