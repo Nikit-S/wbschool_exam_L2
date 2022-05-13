@@ -7,6 +7,7 @@ import (
 type ISOtime time.Time
 
 type Db struct {
+	//todo mutex
 	Storage map[int]Event
 	Index   int
 }

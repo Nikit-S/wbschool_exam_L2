@@ -1,0 +1,47 @@
+User-Agent: *
+Disallow: /page2646920.html
+Disallow: /page7274691.html
+Disallow: /materials
+Disallow: /page2646106.html
+Disallow: /main
+Disallow: /page2683013.html
+Disallow: /page25470938.html
+Disallow: /news/vladimir-egorov-kak-finansovomu-direktoru-perenastroit-biznes
+Disallow: /page25082935.html
+Disallow: /news/habr-moy-boss-robot
+Disallow: /page5499703.html
+Disallow: /demo-success
+Disallow: /page6279863.html
+Disallow: /main-banner
+Disallow: /page2736287.html
+Disallow: /page24410609.html
+Disallow: /news/key-challenges-for-cio-2022
+Disallow: /page5499038.html
+Disallow: /reg-success
+Disallow: /page23994507.html
+Disallow: /news/pbkpro-sekundu-vnimaniya
+Disallow: /page5499168.html
+Disallow: /online-success
+Disallow: /page2897984.html
+Disallow: /error404
+Disallow: /page2793802.html
+Disallow: /feedback
+Disallow: /page10306568.html
+Disallow: /test-mainpage
+Disallow: /page2793992.html
+Disallow: /privacypolicy
+Disallow: /tilda/form*
+Disallow: /tilda/rec*
+Disallow: /tilda/click*
+Disallow: /tilda/scroll*
+Disallow: /tilda/popup*
+Disallow: /tilda/cart*
+Disallow: /tilda/product*
+Disallow: /tilda/event*
+Disallow: /*_escaped_fragment_*
+Disallow:
+
+
+Sitemap: https://turbosolution.ru/sitemap.xml
+Sitemap: https://turbosolution.ru/sitemap-feeds.xml
+Host: https://turbosolution.ru

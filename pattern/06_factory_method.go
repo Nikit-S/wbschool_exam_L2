@@ -71,7 +71,7 @@ type tamara struct {
 }
 
 func newTamara() iBaby {
-	return &sanya{baby: baby{
+	return &tamara{baby: baby{
 		name: "Tamara",
 		eyecolor: struct {
 			red   int

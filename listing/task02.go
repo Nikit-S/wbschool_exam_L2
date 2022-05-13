@@ -5,19 +5,22 @@ import (
 )
 
 func test() (x int) {
+	x = 1
 	defer func() {
 		x++
+		fmt.Println("defer t", x)
+
 	}()
-	x = 1
-	return x
+	return
 }
 
 func anotherTest() int {
 	var x int
+	x = 1
 	defer func() {
 		x++
+		fmt.Println("defer at", x)
 	}()
-	x = 1
 	return x
 }
 

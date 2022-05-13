@@ -14,7 +14,7 @@ func (g *gooi) t() {}
 
 func Foo() error {
 	var err os.PathError
-	return err
+	return &err
 }
 
 func Goo() goo {
@@ -30,3 +30,21 @@ func main() {
 	fmt.Println(t)
 	fmt.Println(t == nil)
 }
+
+//package main
+//
+//import (
+//	"fmt"
+//	"os"
+//)
+//
+//func Foo() error {
+//	var err *os.PathError = nil
+//	return err
+//}
+//
+//func main() {
+//	err := Foo()
+//	fmt.Println(err)
+//	fmt.Println(err == nil)
+//}
